@@ -4,6 +4,7 @@ const ErrorHandler = require("../utils/errorhandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
 const cloudinary = require("cloudinary");
+const error = require("../middleware/error");
 
 
 
@@ -48,26 +49,36 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
 
 // get all products
 exports.getAllproducts = catchAsyncErrors(async (req, res, next) => {
-    const resultPerPage = 8;
-    const productsCount = await Product.countDocuments();
-    const apiFeature = new ApiFeatures(Product.find(), req.query)
-        .search()
-        .filter();
+    try {
+        const resultPerPage = 8;
+        const productsCount = await Product.countDocuments();
+        const apiFeature = new ApiFeatures(Product.find(), req.query)
+            .search()
+            .filter();
 
-    let products = await apiFeature.query.clone();
+        let products = await apiFeature.query.clone();
 
-    const filteredProductsCount = products.length;
+        const filteredProductsCount = products.length;
 
-    apiFeature.pagination(resultPerPage);
-    products = await apiFeature.query;
-    res.status(200).json({
-        success: true,
-        products,
-        productsCount,
-        resultPerPage,
-        filteredProductsCount,
-    })
+        apiFeature.pagination(resultPerPage);
+        products = await apiFeature.query;
+
+        res.status(200).json({
+            success: true,
+            products,
+            productsCount,
+            resultPerPage,
+            filteredProductsCount,
+        });
+    } catch (error) {
+        console.error(error); // Log the error to the server logs
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+        });
+    }
 });
+
 
 
 
